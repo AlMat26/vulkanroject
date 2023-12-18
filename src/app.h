@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <vulkan/vulkan.h>
 #include "window.h"
 
@@ -12,10 +13,16 @@ public:
 private:
     void baseInit();
     void physicalDeviceInit();
+    void logicalDeviceInit();
+    void swapChainInit();
 
-    VkInstance instance;
-    VkDevice device;
-    VkQueue queue;
+    VkInstance _instance;
+    VkPhysicalDevice _physicalDevice;
+    VkDevice _device;
+    VkQueue _graphicsQueue;
+    VkQueue _presentQueue;
 
-    VkSurfaceKHR surface;
+    VkSurfaceKHR _surface;
+
+    int extentWidth, extentHeight;
 };
