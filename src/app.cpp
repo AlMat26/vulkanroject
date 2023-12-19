@@ -292,6 +292,14 @@ void Application::swapChainInit() {
 
     if(vkCreateSwapchainKHR(_device, &swapchainCreateInfo, nullptr, &_swapchain) != VK_SUCCESS)
         throw std::runtime_error("Не удалось создать swapchain");
+
+    //получаем дескрипторы изображений цепочки обмена
+    vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, nullptr);
+    _swapchainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, _swapchainImages.data());
+
+    _swapchainImageFormat = surfaceFormat.format;
+    _swapchainExtent = extent;
 }
 
 void Application::init(Window& window)

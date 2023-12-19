@@ -24,8 +24,11 @@ private:
     VkQueue _presentQueue;
 
     VkSurfaceKHR _surface;
+
     VkSwapchainKHR _swapchain;
     std::vector<VkImage> _swapchainImages; //хранит дескрипторы изображений своп чейна
+    VkFormat _swapchainImageFormat;
+    VkExtent2D _swapchainExtent;
 
     int extentWidth, extentHeight;
 };
