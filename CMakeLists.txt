@@ -6,12 +6,9 @@ find_package(glfw3 REQUIRED)
 
 project(vulkanproject)
 
-link_directories(src)
-add_subdirectory(src)
-
 add_executable(vulkanproject main.cpp src/loadBinFile.cpp src/app.cpp src/window.cpp)
 
-include_directories(vulkanproject ${GLFW3_INCLUDE_DIRS} )
-target_link_libraries(vulkanproject glfw vulkan src)
+include_directories(vulkanproject ${GLFW3_INCLUDE_DIRS})
+target_link_libraries(vulkanproject glfw vulkan)
 
 install(TARGETS vulkanproject RUNTIME DESTINATION bin)

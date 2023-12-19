@@ -331,8 +331,11 @@ void Application::imageViewsInit() {
 }
 
 void Application::graphicsPipelineInit() {
-    auto vertShaderCode = readFile("../shaders/shader.vert");
-    auto fragShaderCode = readFile("../shaders/shader.frag");
+    auto vertShaderCode = utils::readFile("../shaders/shader.vert");
+    auto fragShaderCode = utils::readFile("../shaders/shader.frag");
+
+    std::cout << vertShaderCode.size() << " байт (вершинный шейдер)" << std::endl;
+    std::cout << fragShaderCode.size() << " байт (фрагментный шейдер)" << std::endl;
 }
 
 void Application::init(Window& window)

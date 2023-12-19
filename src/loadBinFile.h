@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
-static std::vector<char> readFile(const std::string & filename);
+namespace utils {
+    std::vector<char> readFile(const std::string &filename);
+}
 
 #endif //VULKANPROJECT_LOADBINFILE_H
