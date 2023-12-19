@@ -254,6 +254,44 @@ void Application::swapChainInit() {
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities, extentWidth, extentHeight);
+
+    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+    // 0 - специальное число, означающее, что максимального количества изображений в swap chain нету
+    if(swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
+        imageCount = swapChainSupport.capabilities.minImageCount;
+
+    VkSwapchainCreateInfoKHR swapchainCreateInfo {};
+    swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swapchainCreateInfo.surface = _surface;
+    swapchainCreateInfo.imageExtent = extent;
+    swapchainCreateInfo.imageArrayLayers = 1; //количество слоев каждого изображения (1 если без стереоскопии)
+    swapchainCreateInfo.imageFormat = surfaceFormat.format;
+    swapchainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
+    swapchainCreateInfo.minImageCount = imageCount;
+    swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+    QueueFamilyIndices indices = findQueueFamilies(_physicalDevice, _surface);
+    uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+
+    if(indices.graphicsFamily != indices.presentFamily) {
+        swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        swapchainCreateInfo.queueFamilyIndexCount = 2;
+        swapchainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+    } else {
+        swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        swapchainCreateInfo.queueFamilyIndexCount = 0; //опционально
+        swapchainCreateInfo.pQueueFamilyIndices = nullptr; //опционально
+    }
+
+    swapchainCreateInfo.preTransform = swapChainSupport.capabilities.currentTransform; //если не собираемся производить трансформации
+    swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; //не используем альфа канал для смешивания с другими окнами
+
+    swapchainCreateInfo.presentMode = presentMode;
+    swapchainCreateInfo.clipped = true; //нас не волнует цвет затемненных пикселей другим окном
+    swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE; //ссылка на предыдущий общект цепочки обмена
+
+    if(vkCreateSwapchainKHR(_device, &swapchainCreateInfo, nullptr, &_swapchain) != VK_SUCCESS)
+        throw std::runtime_error("Не удалось создать swapchain");
 }
 
 void Application::init(Window& window)
@@ -275,6 +313,7 @@ void Application::init(Window& window)
 
 Application::~Application()
 {
+    vkDestroySwapchainKHR(_device, _swapchain, nullptr);
     vkDestroyDevice(_device, nullptr);
     vkDestroySurfaceKHR(_instance, _surface, nullptr);
     vkDestroyInstance(_instance, nullptr);

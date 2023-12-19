@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <vector>
 #include <vulkan/vulkan.h>
 #include "window.h"
 
@@ -23,6 +24,8 @@ private:
     VkQueue _presentQueue;
 
     VkSurfaceKHR _surface;
+    VkSwapchainKHR _swapchain;
+    std::vector<VkImage> _swapchainImages; //хранит дескрипторы изображений своп чейна
 
     int extentWidth, extentHeight;
 };
