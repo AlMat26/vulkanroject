@@ -16,6 +16,7 @@ private:
     void physicalDeviceInit();
     void logicalDeviceInit();
     void swapChainInit();
+    void imageViewsInit();
 
     VkInstance _instance;
     VkPhysicalDevice _physicalDevice;
@@ -27,6 +28,7 @@ private:
 
     VkSwapchainKHR _swapchain;
     std::vector<VkImage> _swapchainImages; //хранит дескрипторы изображений своп чейна
+    std::vector<VkImageView> _swapchainImageViews;
     VkFormat _swapchainImageFormat;
     VkExtent2D _swapchainExtent;
 
