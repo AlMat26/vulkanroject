@@ -17,6 +17,7 @@ private:
     void logicalDeviceInit();
     void swapChainInit();
     void imageViewsInit();
+    void graphicsPipelineInit();
 
     VkInstance _instance;
     VkPhysicalDevice _physicalDevice;

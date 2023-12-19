@@ -1,4 +1,5 @@
 #include "app.h"
+#include "loadBinFile.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -329,6 +330,11 @@ void Application::imageViewsInit() {
     }
 }
 
+void Application::graphicsPipelineInit() {
+    auto vertShaderCode = readFile("../shaders/shader.vert");
+    auto fragShaderCode = readFile("../shaders/shader.frag");
+}
+
 void Application::init(Window& window)
 {
     baseInit();
@@ -345,6 +351,7 @@ void Application::init(Window& window)
     logicalDeviceInit();
     swapChainInit();
     imageViewsInit();
+    graphicsPipelineInit();
 }
 
 Application::~Application()
