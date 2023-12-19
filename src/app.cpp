@@ -28,6 +28,19 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes; //Доступные режимы презентации
 };
 
+VkShaderModule createShaderModule(VkDevice& device, std::vector<char>& code) {
+    VkShaderModuleCreateInfo createInfo {};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = code.size();
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+    VkShaderModule shaderModule;
+    if(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+        throw std::runtime_error("Не удалось создать шейдерный модуль!");
+
+    return shaderModule;
+}
+
 SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice &device, VkSurfaceKHR &surface) {
     SwapChainSupportDetails details;
 
@@ -336,6 +349,30 @@ void Application::graphicsPipelineInit() {
 
     std::cout << vertShaderCode.size() << " байт (вершинный шейдер)" << std::endl;
     std::cout << fragShaderCode.size() << " байт (фрагментный шейдер)" << std::endl;
+
+    VkShaderModule vertShaderModule = createShaderModule(_device, vertShaderCode);
+    VkShaderModule fragShaderModule = createShaderModule(_device, fragShaderCode);
+
+    //вершинный шейдер
+    VkPipelineShaderStageCreateInfo vertShaderCreateInfo {};
+    vertShaderCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertShaderCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vertShaderCreateInfo.module = vertShaderModule;
+    vertShaderCreateInfo.pName = "main"; //определяем точку входа
+
+
+    //фрагментный шейдер
+    VkPipelineShaderStageCreateInfo fragShaderCreateInfo {};
+    vertShaderCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertShaderCreateInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    vertShaderCreateInfo.module = fragShaderModule;
+    vertShaderCreateInfo.pName = "main"; //определяем точку входа
+
+    VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderCreateInfo, fragShaderCreateInfo };
+
+
+    vkDestroyShaderModule(_device, vertShaderModule, nullptr);
+    vkDestroyShaderModule(_device, fragShaderModule, nullptr);
 }
 
 void Application::init(Window& window)
