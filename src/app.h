@@ -33,5 +33,7 @@ private:
     VkFormat _swapchainImageFormat;
     VkExtent2D _swapchainExtent;
 
+    VkPipelineLayout _pipelineLayout; //для uniform переменных в шейдерах
+
     int extentWidth, extentHeight;
 };

@@ -370,6 +370,105 @@ void Application::graphicsPipelineInit() {
 
     VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderCreateInfo, fragShaderCreateInfo };
 
+    //описываем входные вершины с учётом того, что передавать их не будем
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo {};
+    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInputInfo.vertexBindingDescriptionCount = 0; //вершины
+    vertexInputInfo.pVertexBindingDescriptions = nullptr;
+    vertexInputInfo.vertexAttributeDescriptionCount = 0; //аттрибуты вершин
+    vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo {};
+    inputAssemblyCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    inputAssemblyCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST; //без переиспользования вершин (EBO)
+    inputAssemblyCreateInfo.primitiveRestartEnable = VK_FALSE;
+
+
+    VkViewport viewport {};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(_swapchainExtent.width);
+    viewport.height = static_cast<float>(_swapchainExtent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    //обрезает часть фреймбуфера (настроен по размеру на весь холст, без обрезки)
+    VkRect2D scissor {}; //ножницы
+    scissor.offset = {0, 0};
+    scissor.extent = _swapchainExtent;
+
+    //настраиваем параметры, которые не будут статичными
+    std::vector<VkDynamicState> dynamicStates = {
+            VK_DYNAMIC_STATE_VIEWPORT, //динамическое изменение вьюпорта
+            VK_DYNAMIC_STATE_SCISSOR   //динамическое изменение обрезки вьюпорта
+    };
+    VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo {};
+    dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+    dynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
+
+    VkPipelineViewportStateCreateInfo viewportState {};
+    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportState.viewportCount = 1;
+    //viewportState.pViewports = &viewport; /* ----- раскомментировать для не динамического использования ----- */
+    viewportState.scissorCount = 1;
+    //viewportState.pScissors = &scissor;   /* ----- раскомментировать для не динамического использования ----- */
+
+    VkPipelineRasterizationStateCreateInfo rasterizer {}; //преобразовывает данные из вершинного шейдера во фрагменты
+    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizer.depthClampEnable = false; //прикрепление фрагмента к плоскости обрезания, не отбрасываение
+    rasterizer.rasterizerDiscardEnable = false; //геометрия не передается через растеризатор (отключает вывод в фреймбуфер)
+    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    //rasterizer.lineWidth = 1.0f; /* для любого режима, кроме заполнения (fill) */
+    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT; //отбраковываем задние грани
+    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE; //лицевая сторона по часовой стрелке
+
+    rasterizer.depthBiasEnable = false;
+    rasterizer.depthBiasConstantFactor = 0.0f; //опционально (2 поля ниже тоже)
+    rasterizer.depthBiasClamp = 0.0f;
+    rasterizer.depthBiasSlopeFactor = 0.0f;
+
+    VkPipelineMultisampleStateCreateInfo multisampling {}; //мультисемплинг отключён
+    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisampling.sampleShadingEnable = false;
+    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    multisampling.minSampleShading = 1.0; //опционально (3 поля ниже тоже)
+    multisampling.pSampleMask = nullptr;
+    multisampling.alphaToCoverageEnable = false;
+    multisampling.alphaToOneEnable = false;
+
+    VkPipelineColorBlendAttachmentState colorBlendAttachment {}; //смешивание цветов (что есть в фреймбуфере + цвет фрагмента)
+    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachment.blendEnable = VK_TRUE;
+    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA; //опционально если смешивание выключено (5 полей ниже тоже)
+    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; //коэффициент смешивания равен 1 - альфа канал
+    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; //альфу не меняем В)
+    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+    VkPipelineColorBlendStateCreateInfo colorBlendCreateInfo {};
+    colorBlendCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlendCreateInfo.logicOpEnable = VK_FALSE;
+    colorBlendCreateInfo.logicOp = VK_LOGIC_OP_COPY;
+    colorBlendCreateInfo.attachmentCount = 1;
+    colorBlendCreateInfo.pAttachments = &colorBlendAttachment;
+    colorBlendCreateInfo.blendConstants[0] = 0.0f; //опционально (3 поля ниже тоже)
+    colorBlendCreateInfo.blendConstants[1] = 0.0f;
+    colorBlendCreateInfo.blendConstants[2] = 0.0f;
+    colorBlendCreateInfo.blendConstants[3] = 0.0f;
+
+    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {};
+    pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutCreateInfo.setLayoutCount = 0; //опционально (3 поля ниже тоже)
+    pipelineLayoutCreateInfo.pSetLayouts = nullptr;
+    pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+    pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+
+    if(vkCreatePipelineLayout(_device, &pipelineLayoutCreateInfo, nullptr, &_pipelineLayout) != VK_SUCCESS)
+        throw std::runtime_error("Не удалось создать VkPipelineLayout!");
+
+
 
     vkDestroyShaderModule(_device, vertShaderModule, nullptr);
     vkDestroyShaderModule(_device, fragShaderModule, nullptr);
@@ -396,6 +495,8 @@ void Application::init(Window& window)
 
 Application::~Application()
 {
+    vkDestroyPipelineLayout(_device, _pipelineLayout, nullptr);
+
     for(auto& imageView : _swapchainImageViews)
         vkDestroyImageView(_device, imageView, nullptr); //удаление явно созданных image view
 
