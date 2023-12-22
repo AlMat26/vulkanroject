@@ -18,6 +18,7 @@ private:
     void swapChainInit();
     void imageViewsInit();
     void graphicsPipelineInit();
+    void renderPassInit();
 
     VkInstance _instance;
     VkPhysicalDevice _physicalDevice;
@@ -33,6 +34,7 @@ private:
     VkFormat _swapchainImageFormat;
     VkExtent2D _swapchainExtent;
 
+    VkRenderPass _renderPass;
     VkPipelineLayout _pipelineLayout; //для uniform переменных в шейдерах
 
     int extentWidth, extentHeight;
